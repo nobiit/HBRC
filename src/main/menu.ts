@@ -6,6 +6,8 @@ import { HBRCApplication } from '@main/app/base';
 import { AboutUsWindow } from './windows/AboutUs';
 import { isDebugging } from './utils';
 
+const macMenus: Record<number, Electron.Menu> = {};
+
 export const initMenu = (app: App) => {
   if (!app.isReady()) {
     return app.on('ready', () => initMenu(app));
@@ -40,6 +42,13 @@ export const initMenu = (app: App) => {
 
   const menu = Menu.buildFromTemplate(menuTemplate);
   Menu.setApplicationMenu(menu);
+
+  if (PLATFORM.IS_MAC) {
+    app.on('browser-window-blur', () => Menu.setApplicationMenu(menu));
+    app.on('browser-window-focus', (_, window) => {
+      Menu.setApplicationMenu(macMenus[window.id] ?? menu);
+    });
+  }
 };
 
 export const initMenuForMainWindow = (
@@ -169,7 +178,11 @@ export const addMenuItem = (menuItem: Electron.MenuItemConstructorOptions) => {
 export const addMenuItems = (menuItems: Electron.MenuItemConstructorOptions[], window?: BrowserWindow) => {
   const buildFromTemplate = Menu.buildFromTemplate(menuItems);
   if (window) {
-    window.setMenu(buildFromTemplate);
+    if (!PLATFORM.IS_MAC) {
+      window.setMenu(buildFromTemplate);
+    } else {
+      macMenus[window.id] = buildFromTemplate;
+    }
   } else {
     const currentMenu = Menu.getApplicationMenu();
     buildFromTemplate.items.forEach((item) => {
