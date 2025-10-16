@@ -11,10 +11,16 @@ export type BrowserInstanceMessage = {
   message: string;
 };
 
+export enum InstanceType {
+  PuppeteerElectron = 'PUPPETEER_ELECTRON',
+  PuppeteerExternal = 'PUPPETEER_EXTERNAL',
+}
+
 export type BrowserInstance = {
   sessionId: string;
   name: string;
   url: string;
+  type: InstanceType,
   status?: BrowserInstanceStatus;
   initInstructions?: BrowserInstanceInstruction[];
   userAgent?: string;

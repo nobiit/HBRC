@@ -2,13 +2,15 @@ import { FSDB } from 'file-system-db';
 import { PuppeteerElectron } from '@main/pie';
 import { PuppeteerInstanceController, BrowserInstanceController } from './controllers';
 import { Page } from 'puppeteer-core';
-import { BrowserInstance, BrowserInstanceStatus } from '@shared/types';
+import { BrowserInstance, BrowserInstanceStatus, InstanceType } from '@shared/types';
 import { IncommingTransportMessage, OutgoingTransportMessage } from '@shared/types/message';
 import { Logger, createLogger } from '@main/logging';
 import { ClientEvents } from '../events';
 import { TransporterMessaging } from '../transporters';
 import { getDataPath, isDebugging } from '@main/utils';
 import { ENVIRONMENT } from '@shared/constants';
+
+const DEFAULT_INSTANCE_TYPE: InstanceType = InstanceType.PuppeteerElectron;
 
 class BrowserInstanceManager {
   private db: FSDB;
@@ -129,12 +131,14 @@ class BrowserInstanceManager {
     this.emitInstanceUpdatedEvent(sessionId, { status: 'Stopped' });
   }
 
-  async addInstance(name: string, url: string) {
-    const { sessionId, page } = await this.openAddChannelWindownPage(url);
+  async addInstance(name: string, url: string, type?: InstanceType) {
+    type = type ?? DEFAULT_INSTANCE_TYPE;
+    const { sessionId, page } = await this.openAddChannelWindownPage(url, type);
     const bi: BrowserInstance = {
       name,
       sessionId,
       url,
+      type,
     };
     await this.createInstanceController(bi, page);
     this.saveInstance(bi);
@@ -162,7 +166,7 @@ class BrowserInstanceManager {
     });
   }
 
-  private async openAddChannelWindownPage(url: string) {
+  private async openAddChannelWindownPage(url: string, type: InstanceType) {
     const { window, page, identifier } = await this.pie.newWindowPage(url, undefined, {
       show: true,
       hideOnClose: true,

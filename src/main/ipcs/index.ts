@@ -21,8 +21,8 @@ export const registerIPCs = (app: Application) => {
   });
 
   ipcMain.handle(ADD_INSTANCE, async (...args) => {
-    const [_, name, url] = args;
-    return await app.getInstanceManager().addInstance(name, url);
+    const [_, name, url, type] = args;
+    return await app.getInstanceManager().addInstance(name, url, type);
   });
   ipcMain.handle(UPDATE_INSTANCE, async (...args) => {
     const [_, sessionId, updatedData, options] = args;

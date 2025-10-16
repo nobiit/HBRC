@@ -2,6 +2,7 @@ import { PreloadEventKey, PreloadEventListener } from '@shared/event/preload';
 import { MenuItemId } from '@shared/constants';
 import { TransporterStatus } from './transporter';
 import { MainEventKey } from '@shared/event/main';
+import { InstanceType } from './browserInstance';
 
 export type ApplicationAPI = {
   setApplicationOptions: (options: any) => Promise<any>;
@@ -17,7 +18,7 @@ export type ApplicationAPI = {
 
 export type BrowserInstanceManagerAPI = {
   getInstances: () => Promise<any>;
-  addInstance: (name: string, url: string) => Promise<any>;
+  addInstance: (name: string, url: string, type?: InstanceType) => Promise<any>;
   deleteInstance: (sessionId: string) => Promise<any>;
   showInstanceWindow: (sessionId: string) => Promise<any>;
   callInstanceFunction: (sessionId: string, method: string, ...args: any[]) => Promise<any>;

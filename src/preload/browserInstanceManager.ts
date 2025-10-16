@@ -12,7 +12,7 @@ import {
 
 contextBridge.exposeInMainWorld('browserInstanceManagerAPI', {
   getInstances: () => ipcRenderer.invoke(GET_INSTANCES),
-  addInstance: (name: string, url: string) => ipcRenderer.invoke(ADD_INSTANCE, name, url),
+  addInstance: (name: string, url: string, type?: string) => ipcRenderer.invoke(ADD_INSTANCE, name, url, type),
   updateInstance: (
     sessionId: string,
     payload: {

@@ -1,10 +1,11 @@
 import React from 'react';
 import { ChromeFilled } from '@ant-design/icons';
-import { Button, Form, Input, Row } from 'antd';
+import { Button, Form, Input, Row, Select } from 'antd';
 import useBrowserInstanceManager from '@renderer/hooks/useBrowserInstanceManager';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import QueryKeys from '@renderer/constants/queryKeys';
 import { useAppContext } from '@renderer/context/app';
+import { InstanceType } from '@shared/types';
 
 export function AddInstanceComponent() {
   const { messageApi } = useAppContext();
@@ -14,7 +15,7 @@ export function AddInstanceComponent() {
   const queryClient = useQueryClient();
 
   const addInstance = useMutation<any, any, any, any>({
-    mutationFn: async ({ name, url }) => await instanceManager.addInstance(name, url),
+    mutationFn: async ({ name, url, type }) => await instanceManager.addInstance(name, url, type),
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: [QueryKeys.GET_INSTANCES] });
     },
@@ -23,6 +24,7 @@ export function AddInstanceComponent() {
   type FieldType = {
     name: string;
     url: string;
+    type: InstanceType;
   };
 
   const handleAddInstance = async (data: FieldType) => {
@@ -50,6 +52,16 @@ export function AddInstanceComponent() {
           rules={[{ required: true, message: 'Please input instance url!' }]}
         >
           <Input placeholder="https://google.com" />
+        </Form.Item>
+        <Form.Item<FieldType>
+          label="Type"
+          name="type"
+          rules={[{ required: true, message: 'Please choose instance type!' }]}
+        >
+          <Select>
+            <Select.Option value="PUPPETEER_ELECTRON">Puppeteer Electron</Select.Option>
+            <Select.Option value="PUPPETEER_EXTERNAL">Puppeteer External</Select.Option>
+          </Select>
         </Form.Item>
         <Button htmlType="submit" type="primary" icon={<ChromeFilled />}>
           Add instance
