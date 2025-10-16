@@ -8,10 +8,11 @@ import retry from 'async-retry';
 import puppeteer, { Browser, Page } from 'puppeteer-core';
 import { randomString } from '@shared/utils/random';
 import { getLatestUserAgent, isDebugging } from './utils';
+import { Puppeteer, PuppeteerWindowPage, PuppeteerWindowPageOptions } from '@shared/types';
 
-export class PuppeteerElectron {
+export class PuppeteerElectron implements Puppeteer {
   private browser?: Browser;
-  private windowPageMap = new Map<string, { window: BrowserWindow; page: Page }>();
+  private windowPageMap = new Map<string, Omit<PuppeteerWindowPage, 'identifier'>>();
   private _isReady = false;
   constructor() {}
 
@@ -58,15 +59,7 @@ export class PuppeteerElectron {
     return this.browser;
   }
 
-  async newWindowPage(
-    url: string,
-    identifier?: string,
-    options?: {
-      show?: boolean;
-      hideOnClose?: boolean;
-      userAgent?: string;
-    }
-  ) {
+  async newWindowPage(url: string, identifier?: string, options?: PuppeteerWindowPageOptions) {
     const { show, hideOnClose } = options || {};
     if (!identifier) identifier = randomString(30);
     const window = new BrowserWindow({

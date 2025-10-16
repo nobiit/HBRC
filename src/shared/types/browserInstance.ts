@@ -1,3 +1,6 @@
+import type { BrowserWindow } from 'electron';
+import type { Page } from 'puppeteer-core';
+
 export type BrowserInstanceInstruction = {
   command: 'browserEval' | 'page';
   pageCommand?: string;
@@ -27,3 +30,23 @@ export type BrowserInstance = {
   attributes?: Record<string, string>;
   [key: string]: any;
 };
+
+export type PuppeteerWindowPageOptions = {
+  show?: boolean;
+  hideOnClose?: boolean;
+  userAgent?: string;
+};
+
+export type PuppeteerWindowPage = {
+  window: BrowserWindow;
+  page: Page;
+  identifier: string;
+}
+
+export interface Puppeteer {
+  beforeAppReady(): Promise<void>;
+  afterAppReady(): Promise<void>;
+  newWindowPage(url: string, identifier?: string, options?: PuppeteerWindowPageOptions): Promise<PuppeteerWindowPage>;
+  closeWindow(sessionId: string): Promise<void>;
+  getWindowPage(sessionId: string): Omit<PuppeteerWindowPage, 'identifier'> | undefined;
+}

@@ -23,6 +23,7 @@ import { MenuItemId } from '@shared/constants';
 import { HBRCAppInfo, HBRCApplication, HBRCAppOptions } from './base';
 import { createLogger, Logger, setLoggerLevel } from '@main/logging';
 import { isDebugging, setDebugging, updateUserAgents } from '@main/utils';
+import { Puppeteer } from '@shared/types';
 
 class Application implements HBRCApplication {
   private events: ClientEvents;
@@ -31,7 +32,7 @@ class Application implements HBRCApplication {
   private instanceManager: BrowserInstanceManager;
   private transporterManager: TransporterManager;
   private transporterMessaging: TransporterMessaging;
-  private puppeteerElectron: PuppeteerElectron;
+  private puppeteerElectron: Puppeteer;
   private _isReady = false;
   private agentName: string;
   private logger: Logger;

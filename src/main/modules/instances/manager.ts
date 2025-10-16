@@ -1,8 +1,7 @@
 import { FSDB } from 'file-system-db';
-import { PuppeteerElectron } from '@main/pie';
 import { PuppeteerInstanceController, BrowserInstanceController } from './controllers';
 import { Page } from 'puppeteer-core';
-import { BrowserInstance, BrowserInstanceStatus, InstanceType } from '@shared/types';
+import { BrowserInstance, BrowserInstanceStatus, InstanceType, Puppeteer } from '@shared/types';
 import { IncommingTransportMessage, OutgoingTransportMessage } from '@shared/types/message';
 import { Logger, createLogger } from '@main/logging';
 import { ClientEvents } from '../events';
@@ -18,7 +17,7 @@ class BrowserInstanceManager {
   private instanceStatusMap = new Map<string, BrowserInstanceStatus>();
   private logger: Logger;
   constructor(
-    private readonly pie: PuppeteerElectron,
+    private readonly pie: Puppeteer,
     private readonly transporterMessaging: TransporterMessaging,
     private readonly clientEvents: ClientEvents
   ) {
