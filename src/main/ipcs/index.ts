@@ -1,15 +1,16 @@
 import { ipcMain } from 'electron';
 import {
-  GET_INSTANCES,
   ADD_INSTANCE,
-  UPDATE_INSTANCE,
-  DELETE_INSTANCE,
-  SHOW_INSTANCE_WINDOW,
-  SET_APPLICATION_OPTIONS,
   CALL_INSTANCE_FUNCTION,
+  DELETE_INSTANCE,
   GET_APPLICATION_INFO,
+  GET_INSTANCES,
+  SET_APPLICATION_OPTIONS,
+  SHOW_INSTANCE_WINDOW,
   START_INSTANCE,
+  START_INSTANCE_HEADLESS,
   STOP_INSTANCE,
+  UPDATE_INSTANCE,
 } from '@shared/constants/ipcs';
 import { Application } from '../app';
 import { MainEventKey } from '@shared/event/main';
@@ -44,6 +45,11 @@ export const registerIPCs = (app: Application) => {
   ipcMain.handle(START_INSTANCE, async (...args) => {
     const [_, sessionId] = args;
     await app.getInstanceManager().startInstance(sessionId);
+  });
+
+  ipcMain.handle(START_INSTANCE_HEADLESS, async (...args) => {
+    const [_, sessionId] = args;
+    await app.getInstanceManager().startInstanceHeadless(sessionId);
   });
 
   ipcMain.handle(STOP_INSTANCE, async (...args) => {

@@ -19,5 +19,6 @@ export type BrowserInstance = {
   initInstructions?: BrowserInstanceInstruction[];
   userAgent?: string;
   attributes?: Record<string, string>;
+  headless?: boolean;
   [key: string]: any;
 };

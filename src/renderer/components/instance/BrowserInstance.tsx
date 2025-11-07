@@ -189,6 +189,16 @@ export default function BrowserInstanceComponent({
     },
   });
 
+  const startHeadlessInstance = useMutation({
+    mutationFn: instanceManager.startInstanceHeadless,
+    onSuccess: () => {
+      message.success('Start instance headless success');
+    },
+    onError(error, variables, context) {
+      message.error('Start instance headless failed');
+    },
+  });
+
   const stopInstance = useMutation({
     mutationFn: instanceManager.stopInstance,
     onSuccess: () => {
@@ -257,6 +267,17 @@ export default function BrowserInstanceComponent({
           key="start"
           onClick={() => {
             startInstance.mutate(sessionId);
+          }}
+        />
+      </Tooltip>,
+    );
+    actions.push(
+      <Tooltip title="start headless">
+        <PlayCircleOutlined
+          style={{ color: 'green' }}
+          key="start_headless"
+          onClick={() => {
+            startHeadlessInstance.mutate(sessionId);
           }}
         />
       </Tooltip>,

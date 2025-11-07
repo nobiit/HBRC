@@ -2,20 +2,14 @@ import { KVStorage } from '@shared/storages/kvStorage';
 import { ClientKvStorage, ElectronKvStorage } from '@main/modules/storages/kvStorage';
 import { ClientEvents } from '@main/modules/events';
 import BrowserInstanceManager from '@main/modules/instances/manager';
-import { app, BrowserWindow, App as ElectronApp } from 'electron';
+import { app, App as ElectronApp, BrowserWindow } from 'electron';
 import { PuppeteerElectron } from '../pie';
 
 import { makeAppSetup } from '../factories';
 import { MainWindow } from '../windows';
 import { registerIPCs } from '../ipcs';
-import {
-  ON_APPLICATION_READY,
-  ON_INSTANCE_MESSAGE,
-  ON_INSTANCE_UPDATED,
-  ON_SERVER_DISCONNECTED,
-  ON_TRANSPORTER_STATUS_CHANGED,
-} from '@shared/constants/ipcs';
-import { TransporterManager, DefaultTransporterManager, TransporterMessaging } from '@main/modules/transporters';
+import { ON_APPLICATION_READY, ON_INSTANCE_MESSAGE, ON_INSTANCE_UPDATED, ON_SERVER_DISCONNECTED, ON_TRANSPORTER_STATUS_CHANGED } from '@shared/constants/ipcs';
+import { DefaultTransporterManager, TransporterManager, TransporterMessaging } from '@main/modules/transporters';
 import { OutgoingTransportMessage } from '@shared/types/message';
 import { getComputerName } from '@shared/utils/node';
 import { initMenuForMainWindow } from '../menu';
@@ -23,6 +17,7 @@ import { MenuItemId } from '@shared/constants';
 import { HBRCAppInfo, HBRCApplication, HBRCAppOptions } from './base';
 import { createLogger, Logger, setLoggerLevel } from '@main/logging';
 import { isDebugging, setDebugging, updateUserAgents } from '@main/utils';
+import { PuppeteerHeadless } from '@main/pihl';
 
 class Application implements HBRCApplication {
   private events: ClientEvents;
@@ -32,20 +27,23 @@ class Application implements HBRCApplication {
   private transporterManager: TransporterManager;
   private transporterMessaging: TransporterMessaging;
   private puppeteerElectron: PuppeteerElectron;
+  private puppeteerHeadless: PuppeteerHeadless;
   private _isReady = false;
   private agentName: string;
   private logger: Logger;
   private mainWindow?: BrowserWindow;
+
   constructor(private readonly eApp: ElectronApp, private options: HBRCAppOptions) {
     this.logger = createLogger('app');
     this.kvStorage = new ElectronKvStorage();
     this.clientKvStorage = new ClientKvStorage(this.kvStorage);
     this.events = new ClientEvents();
     this.puppeteerElectron = new PuppeteerElectron();
+    this.puppeteerHeadless = new PuppeteerHeadless();
     const transporterManager = new DefaultTransporterManager(this.events);
     this.transporterManager = transporterManager;
     this.transporterMessaging = transporterManager;
-    this.instanceManager = new BrowserInstanceManager(this.puppeteerElectron, this.transporterMessaging, this.events);
+    this.instanceManager = new BrowserInstanceManager(this.puppeteerElectron, this.puppeteerHeadless, this.transporterMessaging, this.events);
     this.agentName = getComputerName();
     this.events.onTransporterStatusChanged.listen(async (status) => {
       if (status == 'connected') {
@@ -123,7 +121,9 @@ class Application implements HBRCApplication {
   async init() {
     await this.initDebugMode();
     await this.puppeteerElectron.beforeAppReady();
+    await this.puppeteerHeadless.beforeAppReady();
     await this.initElectronApp();
+    await this.puppeteerHeadless.afterAppReady();
     await this.puppeteerElectron.afterAppReady();
     await this.instanceManager.init();
     await this.initOptions();

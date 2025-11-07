@@ -22,6 +22,7 @@ export type BrowserInstanceManagerAPI = {
   showInstanceWindow: (sessionId: string) => Promise<any>;
   callInstanceFunction: (sessionId: string, method: string, ...args: any[]) => Promise<any>;
   startInstance: (sessionId: string) => Promise<any>;
+  startInstanceHeadless: (sessionId: string) => Promise<any>;
   stopInstance: (sessionId: string) => Promise<any>;
   updateInstance: (
     sessionId: string,

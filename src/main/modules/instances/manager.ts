@@ -1,24 +1,27 @@
 import { FSDB } from 'file-system-db';
 import { PuppeteerElectron } from '@main/pie';
-import { PuppeteerInstanceController, BrowserInstanceController } from './controllers';
+import { BrowserInstanceController, PuppeteerInstanceController } from './controllers';
 import { Page } from 'puppeteer-core';
 import { BrowserInstance, BrowserInstanceStatus } from '@shared/types';
 import { IncomingTransportMessage, OutgoingTransportMessage } from '@shared/types/message';
-import { Logger, createLogger } from '@main/logging';
+import { createLogger, Logger } from '@main/logging';
 import { ClientEvents } from '../events';
 import { TransporterMessaging } from '../transporters';
 import { getDataPath, isDebugging } from '@main/utils';
 import { ENVIRONMENT } from '@shared/constants';
+import { PuppeteerHeadless } from '@main/pihl';
 
 class BrowserInstanceManager {
   private db: FSDB;
   private channelControllerMap = new Map<string, BrowserInstanceController>();
   private instanceStatusMap = new Map<string, BrowserInstanceStatus>();
   private logger: Logger;
+
   constructor(
     private readonly pie: PuppeteerElectron,
+    private readonly pihl: PuppeteerHeadless,
     private readonly transporterMessaging: TransporterMessaging,
-    private readonly clientEvents: ClientEvents
+    private readonly clientEvents: ClientEvents,
   ) {
     this.logger = createLogger('browserInstanceManager');
   }
@@ -100,6 +103,14 @@ class BrowserInstanceManager {
     await this.loadInstanceWindowPage(instance);
   }
 
+  async startInstanceHeadless(sessionId: string) {
+    const instance = await this.getInstance(sessionId);
+    if (!instance) {
+      throw new Error(`Instance not found: ${sessionId}`);
+    }
+    await this.loadInstancePageHeadless(instance);
+  }
+
   async startAllInstances() {
     const instances = await this.getInstances();
     for (const instance of instances) {
@@ -124,6 +135,7 @@ class BrowserInstanceManager {
     if (controller) {
       await controller.destroy();
       await this.pie.closeWindow(sessionId);
+      await this.pihl.closePage(sessionId);
       this.channelControllerMap.delete(sessionId);
     }
     this.emitInstanceUpdatedEvent(sessionId, { status: 'Stopped' });
@@ -194,6 +206,18 @@ class BrowserInstanceManager {
     this.logger.debug('loadInstanceWindowPage', bi);
   }
 
+  private async loadInstancePageHeadless(bi: BrowserInstance) {
+    if (this.channelControllerMap.has(bi.sessionId)) {
+      return;
+    }
+    this.emitInstanceUpdatedEvent(bi.sessionId, { status: 'Starting', headless: true });
+    const { page } = await this.pihl.newPage(bi.url, bi.sessionId, {
+      userAgent: bi.userAgent,
+    });
+    await this.createInstanceController(bi, page);
+    this.logger.debug('loadInstanceWindowPage', bi);
+  }
+
   private async createInstanceController(bi: BrowserInstance, page: Page) {
     const controller = new PuppeteerInstanceController(bi, this.transporterMessaging, this.clientEvents, page);
     this.channelControllerMap.set(bi.sessionId, controller);
@@ -213,7 +237,7 @@ class BrowserInstanceManager {
       restart?: boolean;
       notifyToTransporter?: boolean;
       notifyToRenderer?: boolean;
-    }
+    },
   ) {
     const { restart = true, notifyToTransporter = false, notifyToRenderer = false } = options || {};
     const i = await this.getInstance(sessionId);

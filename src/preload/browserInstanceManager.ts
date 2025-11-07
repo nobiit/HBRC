@@ -7,7 +7,7 @@ import {
   CALL_INSTANCE_FUNCTION,
   START_INSTANCE,
   STOP_INSTANCE,
-  UPDATE_INSTANCE,
+  UPDATE_INSTANCE, START_INSTANCE_HEADLESS,
 } from '@shared/constants/ipcs';
 
 contextBridge.exposeInMainWorld('browserInstanceManagerAPI', {
@@ -29,6 +29,7 @@ contextBridge.exposeInMainWorld('browserInstanceManagerAPI', {
   callInstanceFunction: (sessionId: string, method: string, ...args: any[]) =>
     ipcRenderer.invoke(CALL_INSTANCE_FUNCTION, sessionId, method, ...args),
   startInstance: (sessionId: string) => ipcRenderer.invoke(START_INSTANCE, sessionId),
+  startInstanceHeadless: (sessionId: string) => ipcRenderer.invoke(START_INSTANCE_HEADLESS, sessionId),
   stopInstance: (sessionId: string) => ipcRenderer.invoke(STOP_INSTANCE, sessionId),
   startAllInstances: () => ipcRenderer.invoke(START_INSTANCE, 'all'),
 });
