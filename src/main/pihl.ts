@@ -67,6 +67,7 @@ export class PuppeteerHeadless {
     if (page) {
       page.close();
     }
+    this.pageMap.delete(identifier);
   }
 
   private async getPage(identifier: string) {

@@ -107,6 +107,7 @@ export class PuppeteerElectron {
     if (page) {
       page.close();
     }
+    this.windowPageMap.delete(identifier);
   }
 
   async hideWindow(identifier: string) {
