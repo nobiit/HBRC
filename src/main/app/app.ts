@@ -3,7 +3,6 @@ import { ClientKvStorage, ElectronKvStorage } from '@main/modules/storages/kvSto
 import { ClientEvents } from '@main/modules/events';
 import BrowserInstanceManager from '@main/modules/instances/manager';
 import { app, BrowserWindow, App as ElectronApp } from 'electron';
-import { PuppeteerElectron } from '../pie';
 
 import { makeAppSetup } from '../factories';
 import { MainWindow } from '../windows';
@@ -23,7 +22,6 @@ import { MenuItemId } from '@shared/constants';
 import { HBRCAppInfo, HBRCApplication, HBRCAppOptions } from './base';
 import { createLogger, Logger, setLoggerLevel } from '@main/logging';
 import { isDebugging, setDebugging, updateUserAgents } from '@main/utils';
-import { Puppeteer } from '@shared/types';
 
 class Application implements HBRCApplication {
   private events: ClientEvents;
@@ -32,7 +30,6 @@ class Application implements HBRCApplication {
   private instanceManager: BrowserInstanceManager;
   private transporterManager: TransporterManager;
   private transporterMessaging: TransporterMessaging;
-  private puppeteerElectron: Puppeteer;
   private _isReady = false;
   private agentName: string;
   private logger: Logger;
@@ -42,11 +39,10 @@ class Application implements HBRCApplication {
     this.kvStorage = new ElectronKvStorage();
     this.clientKvStorage = new ClientKvStorage(this.kvStorage);
     this.events = new ClientEvents();
-    this.puppeteerElectron = new PuppeteerElectron();
     const transporterManager = new DefaultTransporterManager(this.events);
     this.transporterManager = transporterManager;
     this.transporterMessaging = transporterManager;
-    this.instanceManager = new BrowserInstanceManager(this.puppeteerElectron, this.transporterMessaging, this.events);
+    this.instanceManager = new BrowserInstanceManager(this.transporterMessaging, this.events);
     this.agentName = getComputerName();
     this.events.onTransporterStatusChanged.listen(async (status) => {
       if (status == 'connected') {
@@ -123,9 +119,9 @@ class Application implements HBRCApplication {
 
   async init() {
     await this.initDebugMode();
-    await this.puppeteerElectron.beforeAppReady();
+    await this.instanceManager.beforeAppReady();
     await this.initElectronApp();
-    await this.puppeteerElectron.afterAppReady();
+    await this.instanceManager.afterAppReady();
     await this.instanceManager.init();
     await this.initOptions();
     await updateUserAgents();
@@ -178,13 +174,6 @@ class Application implements HBRCApplication {
       throw new Error('Application not ready');
     }
     return this.instanceManager;
-  }
-
-  getPuppeteerElectron() {
-    if (!this._isReady) {
-      throw new Error('Application not ready');
-    }
-    return this.puppeteerElectron;
   }
 
   setDebugMode(isEnableDebug: boolean): void {

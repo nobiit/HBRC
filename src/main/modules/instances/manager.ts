@@ -1,13 +1,14 @@
 import { FSDB } from 'file-system-db';
-import { PuppeteerInstanceController, BrowserInstanceController } from './controllers';
+import { BrowserInstanceController, PuppeteerInstanceController } from './controllers';
 import { Page } from 'puppeteer-core';
 import { BrowserInstance, BrowserInstanceStatus, InstanceType, Puppeteer } from '@shared/types';
 import { IncommingTransportMessage, OutgoingTransportMessage } from '@shared/types/message';
-import { Logger, createLogger } from '@main/logging';
+import { createLogger, Logger } from '@main/logging';
 import { ClientEvents } from '../events';
 import { TransporterMessaging } from '../transporters';
 import { getDataPath, isDebugging } from '@main/utils';
 import { ENVIRONMENT } from '@shared/constants';
+import { PuppeteerElectron } from '@main/pie';
 
 const DEFAULT_INSTANCE_TYPE: InstanceType = InstanceType.PuppeteerElectron;
 
@@ -15,13 +16,15 @@ class BrowserInstanceManager {
   private db: FSDB;
   private channelControlllerMap = new Map<string, BrowserInstanceController>();
   private instanceStatusMap = new Map<string, BrowserInstanceStatus>();
+  private pie: Puppeteer;
   private logger: Logger;
+
   constructor(
-    private readonly pie: Puppeteer,
     private readonly transporterMessaging: TransporterMessaging,
-    private readonly clientEvents: ClientEvents
+    private readonly clientEvents: ClientEvents,
   ) {
     this.logger = createLogger('browserInstanceManager');
+    this.pie = new PuppeteerElectron();
   }
 
   async init() {
@@ -216,7 +219,7 @@ class BrowserInstanceManager {
       restart?: boolean;
       notifyToTransporter?: boolean;
       notifyToRenderer?: boolean;
-    }
+    },
   ) {
     const { restart = true, notifyToTransporter = false, notifyToRenderer = false } = options || {};
     const i = await this.getInstance(sessionId);
@@ -251,6 +254,14 @@ class BrowserInstanceManager {
     }
     const func = controller[method].bind(controller);
     return await func(...args);
+  }
+
+  async beforeAppReady() {
+    await this.pie.beforeAppReady();
+  }
+
+  async afterAppReady() {
+    await this.pie.afterAppReady();
   }
 }
 
