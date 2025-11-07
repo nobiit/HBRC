@@ -9,6 +9,7 @@ import { TransporterMessaging } from '../transporters';
 import { getDataPath, isDebugging } from '@main/utils';
 import { ENVIRONMENT } from '@shared/constants';
 import { PuppeteerElectron } from '@main/pie';
+import { PuppeteerHeadless } from 'main/pie-headless';
 
 const DEFAULT_INSTANCE_TYPE: InstanceType = InstanceType.PuppeteerElectron;
 
@@ -16,7 +17,8 @@ class BrowserInstanceManager {
   private db: FSDB;
   private channelControllerMap = new Map<string, BrowserInstanceController>();
   private instanceStatusMap = new Map<string, BrowserInstanceStatus>();
-  private pie: Puppeteer;
+  private piElectron: PuppeteerElectron;
+  private piExternal: PuppeteerHeadless;
   private logger: Logger;
 
   constructor(
@@ -24,7 +26,8 @@ class BrowserInstanceManager {
     private readonly clientEvents: ClientEvents,
   ) {
     this.logger = createLogger('browserInstanceManager');
-    this.pie = new PuppeteerElectron();
+    this.piElectron = new PuppeteerElectron();
+    this.piExternal = new PuppeteerExternal();
   }
 
   async init() {
@@ -127,7 +130,8 @@ class BrowserInstanceManager {
     const controller = this.getController(sessionId);
     if (controller) {
       await controller.destroy();
-      await this.pie.closeWindow(sessionId);
+      await this.piElectron.closeWindow(sessionId);
+      await this.piExternal.closeWindow(sessionId);
       this.channelControllerMap.delete(sessionId);
     }
     this.emitInstanceUpdatedEvent(sessionId, { status: 'Stopped' });
@@ -169,15 +173,20 @@ class BrowserInstanceManager {
   }
 
   private async openAddChannelWindowPage(url: string, type: InstanceType) {
-    const { window, page, identifier } = await this.pie.newWindowPage(url, undefined, {
+    let pi: Puppeteer = this.piElectron;
+    if (type === InstanceType.PuppeteerExternal) {
+      pi = this.piExternal;
+    }
+    const { window, page, identifier } = await pi.newWindowPage(url, undefined, {
       show: true,
       hideOnClose: true,
     });
-    return { window, page, sessionId: identifier };
+    return { window, page, type, sessionId: identifier };
   }
 
   async showInstanceWindow(sessionId: string) {
-    const { window } = this.pie.getWindowPage(sessionId) || {};
+    // TODO: support external pie
+    const { window } = this.piElectron.getWindowPage(sessionId) || {};
     if (window) {
       if (isDebugging()) {
         window.webContents.openDevTools({ mode: 'right' });
@@ -190,8 +199,12 @@ class BrowserInstanceManager {
     if (this.channelControllerMap.has(bi.sessionId)) {
       return;
     }
+    let pi: Puppeteer = this.piElectron;
+    if (bi.type === InstanceType.PuppeteerExternal) {
+      pi = this.piExternal;
+    }
     this.emitInstanceUpdatedEvent(bi.sessionId, { status: 'Starting' });
-    const { page } = await this.pie.newWindowPage(bi.url, bi.sessionId, {
+    const { page } = await pi.newWindowPage(bi.url, bi.sessionId, {
       show: false,
       hideOnClose: true,
       userAgent: bi.userAgent,

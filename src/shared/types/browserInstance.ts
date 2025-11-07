@@ -38,15 +38,19 @@ export type PuppeteerWindowPageOptions = {
 };
 
 export type PuppeteerWindowPage = {
-  window: BrowserWindow;
+  window?: BrowserWindow;
   page: Page;
   identifier: string;
 }
 
 export interface Puppeteer {
   beforeAppReady(): Promise<void>;
+
   afterAppReady(): Promise<void>;
+
   newWindowPage(url: string, identifier?: string, options?: PuppeteerWindowPageOptions): Promise<PuppeteerWindowPage>;
+
   closeWindow(sessionId: string): Promise<void>;
+
   getWindowPage(sessionId: string): Omit<PuppeteerWindowPage, 'identifier'> | undefined;
 }
