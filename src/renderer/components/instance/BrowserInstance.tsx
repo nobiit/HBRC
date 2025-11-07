@@ -1,14 +1,6 @@
 import React, { useEffect } from 'react';
-import { Card, Tag, Popconfirm, message, Modal, Form, Input, Button, Divider, Space } from 'antd';
-import {
-  SendOutlined,
-  WindowsOutlined,
-  DeleteOutlined,
-  PlayCircleOutlined,
-  PauseCircleOutlined,
-  TagOutlined,
-  PlusOutlined,
-} from '@ant-design/icons';
+import { Button, Card, Divider, Form, Input, message, Modal, Popconfirm, Space, Tag, Tooltip } from 'antd';
+import { DeleteOutlined, PauseCircleOutlined, PlayCircleOutlined, PlusOutlined, SendOutlined, TagOutlined, WindowsOutlined } from '@ant-design/icons';
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import QueryKeys from '@renderer/constants/queryKeys';
 import useBrowserInstanceManager from '@renderer/hooks/useBrowserInstanceManager';
@@ -25,7 +17,8 @@ const DeleteBtn = ({ disabled, onConfirm }) => {
       okText="Delete"
       cancelText="Cancel"
     >
-      <DeleteOutlined style={{ color: 'red' }} onClick={async () => {}} />
+      <DeleteOutlined style={{ color: 'red' }} onClick={async () => {
+      }} />
     </Popconfirm>
   );
 };
@@ -90,7 +83,7 @@ const SetAttributesModal = ({ isOpen, instance, setIsOpen }) => {
           restart: false,
           notifyToTransporter: true,
           notifyToRenderer: true,
-        }
+        },
       ),
     onSuccess: () => {
       message.success('Update attributes success');
@@ -162,9 +155,9 @@ const SetAttributesModal = ({ isOpen, instance, setIsOpen }) => {
 };
 
 export default function BrowserInstanceComponent({
-  instance,
-  instanceMessage,
-}: {
+                                                   instance,
+                                                   instanceMessage,
+                                                 }: {
   instance: BrowserInstance;
   instanceMessage?: BrowserInstanceMessage;
 }) {
@@ -212,55 +205,67 @@ export default function BrowserInstanceComponent({
   const actions = [];
 
   actions.push(
-    <TagOutlined
-      key="attributes"
-      onClick={() => {
-        setSetAttributesModalOpen(true);
-      }}
-    />
+    <Tooltip title="attributes">
+      <TagOutlined
+        key="attributes"
+        onClick={() => {
+          setSetAttributesModalOpen(true);
+        }}
+      />
+    </Tooltip>,
   );
 
   if (status === 'Running') {
     actions.push(
-      <PauseCircleOutlined
-        style={{ color: 'orange' }}
-        key="stop"
-        onClick={() => {
-          stopInstance.mutate(sessionId);
-        }}
-      />
+      <Tooltip title="stop">
+        <PauseCircleOutlined
+          style={{ color: 'orange' }}
+          key="stop"
+          onClick={() => {
+            stopInstance.mutate(sessionId);
+          }}
+        />
+      </Tooltip>,
     );
     actions.push(
-      <WindowsOutlined
-        key="showWindow"
-        onClick={() => {
-          instanceManager.showInstanceWindow(sessionId);
-        }}
-      />
+      <Tooltip title="show window">
+        <WindowsOutlined
+          key="showWindow"
+          onClick={() => {
+            instanceManager.showInstanceWindow(sessionId);
+          }}
+        />
+      </Tooltip>,
     );
     if (isDebug) {
       actions.push(
-        <SendOutlined
-          key="call"
-          onClick={() => {
-            setCFModalOpen(true);
-          }}
-        />
+        <Tooltip title="call">
+          <SendOutlined
+            key="call"
+            onClick={() => {
+              setCFModalOpen(true);
+            }}
+          />
+        </Tooltip>,
       );
     }
   } else if (status === 'Stopped') {
     actions.push(
-      <PlayCircleOutlined
-        style={{ color: 'green' }}
-        key="start"
-        onClick={() => {
-          startInstance.mutate(sessionId);
-        }}
-      />
+      <Tooltip title="start">
+        <PlayCircleOutlined
+          style={{ color: 'green' }}
+          key="start"
+          onClick={() => {
+            startInstance.mutate(sessionId);
+          }}
+        />
+      </Tooltip>,
     );
   }
   actions.push(
-    <DeleteBtn key="delete" disabled={deleteChannel.isPending} onConfirm={() => deleteChannel.mutate(sessionId)} />
+    <Tooltip title="delete">
+      <DeleteBtn key="delete" disabled={deleteChannel.isPending} onConfirm={() => deleteChannel.mutate(sessionId)} />,
+    </Tooltip>,
   );
 
   let statusColor = 'default';
@@ -285,7 +290,7 @@ export default function BrowserInstanceComponent({
   return (
     <Card actions={actions}>
       <Card.Meta
-        title={instance.name}
+        title={<Tooltip title={sessionId}>{instance.name}</Tooltip>}
         description={
           <div>
             <div>
