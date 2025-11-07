@@ -2,7 +2,7 @@ import { FSDB } from 'file-system-db';
 import { BrowserInstanceController, PuppeteerInstanceController } from './controllers';
 import { Page } from 'puppeteer-core';
 import { BrowserInstance, BrowserInstanceStatus, InstanceType, Puppeteer } from '@shared/types';
-import { IncommingTransportMessage, OutgoingTransportMessage } from '@shared/types/message';
+import { IncomingTransportMessage, OutgoingTransportMessage } from '@shared/types/message';
 import { createLogger, Logger } from '@main/logging';
 import { ClientEvents } from '../events';
 import { TransporterMessaging } from '../transporters';
@@ -40,7 +40,7 @@ class BrowserInstanceManager {
     this.transporterMessaging.onMessageReceived(this.processTransportMessage.bind(this));
   }
 
-  private async processTransportMessage(data: IncommingTransportMessage) {
+  private async processTransportMessage(data: IncomingTransportMessage) {
     this.logger.debug('processTransportMessage', { data });
     if (data.controlInstance) {
       const { sessionId, instructions } = data.controlInstance;
@@ -53,7 +53,7 @@ class BrowserInstanceManager {
     }
   }
 
-  private async handleManageInstanceMessage(data: IncommingTransportMessage['manageInstance']) {
+  private async handleManageInstanceMessage(data: IncomingTransportMessage['manageInstance']) {
     this.logger.debug('handleManageInstanceMessage', { data });
     const { action, payload } = data;
     if (action == 'updateInstance') {
