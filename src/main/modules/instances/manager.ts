@@ -3,7 +3,7 @@ import { PuppeteerElectron } from '@main/pie';
 import { PuppeteerInstanceController, BrowserInstanceController } from './controllers';
 import { Page } from 'puppeteer-core';
 import { BrowserInstance, BrowserInstanceStatus } from '@shared/types';
-import { IncommingTransportMessage, OutgoingTransportMessage } from '@shared/types/message';
+import { IncomingTransportMessage, OutgoingTransportMessage } from '@shared/types/message';
 import { Logger, createLogger } from '@main/logging';
 import { ClientEvents } from '../events';
 import { TransporterMessaging } from '../transporters';
@@ -12,7 +12,7 @@ import { ENVIRONMENT } from '@shared/constants';
 
 class BrowserInstanceManager {
   private db: FSDB;
-  private channelControlllerMap = new Map<string, BrowserInstanceController>();
+  private channelControllerMap = new Map<string, BrowserInstanceController>();
   private instanceStatusMap = new Map<string, BrowserInstanceStatus>();
   private logger: Logger;
   constructor(
@@ -36,7 +36,7 @@ class BrowserInstanceManager {
     this.transporterMessaging.onMessageReceived(this.processTransportMessage.bind(this));
   }
 
-  private async processTransportMessage(data: IncommingTransportMessage) {
+  private async processTransportMessage(data: IncomingTransportMessage) {
     this.logger.debug('processTransportMessage', { data });
     if (data.controlInstance) {
       const { sessionId, instructions } = data.controlInstance;
@@ -49,7 +49,7 @@ class BrowserInstanceManager {
     }
   }
 
-  private async handleManageInstanceMessage(data: IncommingTransportMessage['manageInstance']) {
+  private async handleManageInstanceMessage(data: IncomingTransportMessage['manageInstance']) {
     this.logger.debug('handleManageInstanceMessage', { data });
     const { action, payload } = data;
     if (action == 'updateInstance') {
@@ -84,7 +84,7 @@ class BrowserInstanceManager {
   }
 
   async getRunningInstanceSessionIdSet() {
-    return new Set(this.channelControlllerMap.keys());
+    return new Set(this.channelControllerMap.keys());
   }
 
   async getInstance(sessionId: string) {
@@ -124,13 +124,13 @@ class BrowserInstanceManager {
     if (controller) {
       await controller.destroy();
       await this.pie.closeWindow(sessionId);
-      this.channelControlllerMap.delete(sessionId);
+      this.channelControllerMap.delete(sessionId);
     }
     this.emitInstanceUpdatedEvent(sessionId, { status: 'Stopped' });
   }
 
   async addInstance(name: string, url: string) {
-    const { sessionId, page } = await this.openAddChannelWindownPage(url);
+    const { sessionId, page } = await this.openAddChannelWindowPage(url);
     const bi: BrowserInstance = {
       name,
       sessionId,
@@ -162,7 +162,7 @@ class BrowserInstanceManager {
     });
   }
 
-  private async openAddChannelWindownPage(url: string) {
+  private async openAddChannelWindowPage(url: string) {
     const { window, page, identifier } = await this.pie.newWindowPage(url, undefined, {
       show: true,
       hideOnClose: true,
@@ -181,7 +181,7 @@ class BrowserInstanceManager {
   }
 
   private async loadInstanceWindowPage(bi: BrowserInstance) {
-    if (this.channelControlllerMap.has(bi.sessionId)) {
+    if (this.channelControllerMap.has(bi.sessionId)) {
       return;
     }
     this.emitInstanceUpdatedEvent(bi.sessionId, { status: 'Starting' });
@@ -196,7 +196,7 @@ class BrowserInstanceManager {
 
   private async createInstanceController(bi: BrowserInstance, page: Page) {
     const controller = new PuppeteerInstanceController(bi, this.transporterMessaging, this.clientEvents, page);
-    this.channelControlllerMap.set(bi.sessionId, controller);
+    this.channelControllerMap.set(bi.sessionId, controller);
     await controller.init();
     this.emitInstanceUpdatedEvent(bi.sessionId, { status: 'Running' });
     return controller;
@@ -238,7 +238,7 @@ class BrowserInstanceManager {
   }
 
   getController(sessionId: string) {
-    return this.channelControlllerMap.get(sessionId);
+    return this.channelControllerMap.get(sessionId);
   }
 
   async callInstanceFunction(sessionId: string, method: string, ...args: any[]) {
