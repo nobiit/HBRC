@@ -161,7 +161,7 @@ export default function BrowserInstanceComponent({
   instance: BrowserInstance;
   instanceMessage?: BrowserInstanceMessage;
 }) {
-  const { status, sessionId } = instance;
+  const { status, sessionId, headless } = instance;
 
   const { isDebug } = useApplicationInfo();
 
@@ -317,6 +317,7 @@ export default function BrowserInstanceComponent({
             <div>
               <Tag color={statusColor}>{status}</Tag>
               <Tag color="blue">{instance.url}</Tag>
+              {headless && <Tag color="blue">Headless</Tag>}
             </div>
             {renderInstanceMessage()}
           </div>

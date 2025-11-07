@@ -2,9 +2,10 @@
  * Provide a way to control browsers by puppeteer
  */
 
-import { Browser, launch, Page } from 'puppeteer-core';
-import puppeteer from 'puppeteer';
+import puppeteer, { Browser, launch, Page } from 'puppeteer';
 import { randomString } from '@shared/utils/random';
+import { getLatestUserAgent } from '@main/utils';
+import { PuppeteerElectron } from './pie';
 
 export class PuppeteerHeadless {
   private pageMap = new Map<string, { page: Page }>();
@@ -48,9 +49,13 @@ export class PuppeteerHeadless {
       userAgent?: string;
     },
   ) {
-    // TODO: Support user agent
+    const userAgent = options?.userAgent || getLatestUserAgent('windows', 'chrome');
     if (!identifier) identifier = randomString(30);
+    const browserContext = await this.getBrowser().createBrowserContext();
+    const { dataCookies } = await PuppeteerElectron.getSessionData(identifier);
+    await browserContext.setCookie(...dataCookies);
     const page = await this.getBrowser().newPage();
+    await page.setUserAgent(userAgent);
     await page.goto(url, { waitUntil: 'networkidle2' });
     await page.evaluate(`window.hbrcWindowId = '${identifier}'`);
     this.pageMap.set(identifier, { page });

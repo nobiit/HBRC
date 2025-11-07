@@ -1,5 +1,6 @@
 import { BaseBrowserInstanceController } from './base';
 import { Page } from 'puppeteer-core';
+import { Page as PageHeadless } from 'puppeteer';
 import { BrowserInstance, BrowserInstanceInstruction } from '@shared/types';
 import { createLogger, Logger } from '@main/logging';
 import { TransporterMessaging } from '@main/modules/transporters';
@@ -11,7 +12,7 @@ export class PuppeteerInstanceController extends BaseBrowserInstanceController {
     instance: BrowserInstance,
     transporterMessaging: TransporterMessaging,
     events: ClientEvents,
-    protected readonly page: Page
+    protected readonly page: Page | PageHeadless
   ) {
     super(instance, transporterMessaging, events);
     this.logger = createLogger('puppeteerInstanceController');
@@ -66,8 +67,8 @@ export class PuppeteerInstanceController extends BaseBrowserInstanceController {
     }
   }
 
-  browserEval(code: string): Promise<any> {
-    return this.page.evaluate(code);
+  async browserEval(code: string): Promise<any> {
+    return (this.page as Page).evaluate(code);
   }
 
   destroy(): Promise<void> {

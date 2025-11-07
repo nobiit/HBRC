@@ -2,6 +2,7 @@ import { FSDB } from 'file-system-db';
 import { PuppeteerElectron } from '@main/pie';
 import { BrowserInstanceController, PuppeteerInstanceController } from './controllers';
 import { Page } from 'puppeteer-core';
+import { Page as PageHeadless } from 'puppeteer';
 import { BrowserInstance, BrowserInstanceStatus } from '@shared/types';
 import { IncomingTransportMessage, OutgoingTransportMessage } from '@shared/types/message';
 import { createLogger, Logger } from '@main/logging';
@@ -218,7 +219,7 @@ class BrowserInstanceManager {
     this.logger.debug('loadInstanceWindowPage', bi);
   }
 
-  private async createInstanceController(bi: BrowserInstance, page: Page) {
+  private async createInstanceController(bi: BrowserInstance, page: Page | PageHeadless) {
     const controller = new PuppeteerInstanceController(bi, this.transporterMessaging, this.clientEvents, page);
     this.channelControllerMap.set(bi.sessionId, controller);
     await controller.init();

@@ -2,10 +2,10 @@
  * Provide a way to control electron BrowserWindow by puppeteer
  */
 
-import { app, App, BrowserWindow } from 'electron';
+import { app, BrowserWindow, session } from 'electron';
 import getPort from 'get-port';
 import retry from 'async-retry';
-import puppeteer, { Browser, Page } from 'puppeteer-core';
+import puppeteer, { Browser, CookieData, Page } from 'puppeteer-core';
 import { randomString } from '@shared/utils/random';
 import { getLatestUserAgent, isDebugging } from './utils';
 
@@ -13,7 +13,9 @@ export class PuppeteerElectron {
   private browser?: Browser;
   private windowPageMap = new Map<string, { window: BrowserWindow; page: Page }>();
   private _isReady = false;
-  constructor() {}
+
+  constructor() {
+  }
 
   async beforeAppReady(): Promise<void> {
     if (app.isReady()) {
@@ -34,7 +36,7 @@ export class PuppeteerElectron {
       throw new Error('Please connect after the app is ready.');
     }
     if (!puppeteer) {
-      throw new Error("The parameter 'puppeteer' was not passed in.");
+      throw new Error('The parameter \'puppeteer\' was not passed in.');
     }
 
     const port = app.commandLine.getSwitchValue('remote-debugging-port');
@@ -65,7 +67,7 @@ export class PuppeteerElectron {
       show?: boolean;
       hideOnClose?: boolean;
       userAgent?: string;
-    }
+    },
   ) {
     const { show, hideOnClose } = options || {};
     if (!identifier) identifier = randomString(30);
@@ -134,5 +136,13 @@ export class PuppeteerElectron {
     const response = await fetch(`http://127.0.0.1:${port}/json/version?t=${Math.random()}`);
     const debugEndpoints = await response.json();
     return debugEndpoints.webSocketDebuggerUrl;
+  }
+
+  static async getSessionData(identifier: string) {
+    const s = session.fromPartition(`persist:${identifier}`);
+    const cookies = await s.cookies.get({});
+    await s.closeAllConnections();
+    let dataCookies = cookies.map(({ sameSite, ...data }) => data as CookieData);
+    return { cookies, dataCookies };
   }
 }
