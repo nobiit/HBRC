@@ -25,6 +25,8 @@ export class PuppeteerElectron {
     const actualPort = await getPort({ host: '127.0.0.1', port: 9219 });
     app.commandLine.appendSwitch('remote-debugging-port', `${actualPort}`);
     app.commandLine.appendSwitch('remote-debugging-address', '127.0.0.1');
+    // app.commandLine.appendSwitch('headless'); // hoặc 'headless=new'
+    // app.commandLine.appendSwitch('disable-gpu');
   }
 
   isReady() {
