@@ -3,7 +3,7 @@
   "version": "0.0.1-alpha.5",
   "description": "Headless Browser Remote Controller is an open-source project designed to remotely control browsers for automation testing and other purposes.",
   "main": "./out/main/index.js",
-  "repository": "https://github.com/cuongnguyen1996/HBRC",
+  "repository": "https://github.com/nobiit/HBRC",
   "author": "Cuong Nguyen <cuongnguyen29696@gmail.com>",
   "license": "MIT",
   "resources": "src/resources",
