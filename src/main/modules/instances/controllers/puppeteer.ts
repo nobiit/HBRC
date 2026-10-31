@@ -37,7 +37,6 @@ export abstract class BasePuppeteerInstanceController extends BaseBrowserInstanc
   }
 
   private async executeInitInstructions() {
-    await this.removeNewDocumentScripts();
     if (this.instance.initInstructions) {
       try {
         await this.executeInstructions(this.instance.initInstructions);
@@ -53,6 +52,8 @@ export abstract class BasePuppeteerInstanceController extends BaseBrowserInstanc
   }
 
   async init(): Promise<void> {
+    // init always runs on a fresh page, so ids registered on a previous page no longer apply
+    this.newDocumentScriptIds = [];
     await this.page.exposeFunction('bicPostMessage', this.postMessage.bind(this));
     await this.page.exposeFunction('bicPostInstanceMessage', this.postInstanceMessage.bind(this));
     await this.executeInitInstructions();
