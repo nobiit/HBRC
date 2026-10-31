@@ -1,5 +1,5 @@
 import { ISubscriptionMap, MqttClient } from 'mqtt';
-import { BaseTransporter, BaseTransporterOptions } from './base';
+import { allowInsecureTls, BaseTransporter, BaseTransporterOptions } from './base';
 
 const mqtt = require('mqtt');
 
@@ -42,6 +42,7 @@ export class MqttTransporter extends BaseTransporter {
       clean: qos == 0,
       connectTimeout: 30000,
       keepalive: 30,
+      rejectUnauthorized: !allowInsecureTls,
     });
     const subscribeTopicsMap = subscribeTopics.reduce((acc: ISubscriptionMap, topic) => {
       acc[topic] = { qos: qos };

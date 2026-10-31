@@ -1,5 +1,8 @@
 import axios, { AxiosInstance } from 'axios';
-import { BaseTransporter, BaseTransporterOptions } from './base';
+import https from 'https';
+import { allowInsecureTls, BaseTransporter, BaseTransporterOptions } from './base';
+
+const httpsAgent = allowInsecureTls ? new https.Agent({ rejectUnauthorized: false }) : undefined;
 
 export type HttpTransporterOptions = {
   puller?: {
@@ -29,6 +32,7 @@ export class HttpTransporter extends BaseTransporter {
         baseURL: options.puller.url,
         params: options.puller.params,
         headers: options.puller.headers,
+        httpsAgent,
       });
     }
     if (options.pusher) {
@@ -36,6 +40,7 @@ export class HttpTransporter extends BaseTransporter {
         baseURL: options.pusher.url,
         params: options.pusher.params,
         headers: options.pusher.headers,
+        httpsAgent,
       });
     }
   }

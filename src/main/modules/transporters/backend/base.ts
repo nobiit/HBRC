@@ -1,6 +1,9 @@
 import { createLogger, Logger } from '@main/logging';
 import { OutgoingTransportMessage } from '@shared/types/message';
 
+// Accept self-signed backend certs (e.g. a local backend). Never enable in release builds.
+export const allowInsecureTls = import.meta.env.MAIN_VITE_TRANSPORTER_INSECURE_TLS === 'true';
+
 export interface Transporter {
   getName(): string;
   connect(): void;
