@@ -1,4 +1,4 @@
-import { App, BrowserWindow, Menu, shell } from 'electron';
+import { App, BrowserWindow, Menu, app as electronApp, shell } from 'electron';
 import { DebugWindow } from './windows/Debug';
 import { PLATFORM } from '@shared/constants/main';
 import { GITHUB_REPOSITORY_URL, MenuItemId, ON_MENU_ITEM_CLICKED, ON_MENU_ITEM_PROCESSED } from '@shared/constants';
@@ -11,34 +11,46 @@ export const initMenu = (app: App) => {
   if (!app.isReady()) {
     return app.on('ready', () => initMenu(app));
   }
-  const macMenu: Array<Electron.MenuItemConstructorOptions | Electron.MenuItem> = [
-    {
-      label: app.name,
-      submenu: [{ label: 'Quit', accelerator: 'Command+Q', click: () => app.quit() }],
-    },
-    {
-      label: 'Edit',
-      submenu: [
-        { role: 'undo' },
-        { role: 'redo' },
-        { type: 'separator' },
-        { role: 'cut' },
-        { role: 'copy' },
-        { role: 'paste' },
-        { role: 'selectAll' },
-      ],
-    },
-  ];
-
   const menuTemplate: Array<Electron.MenuItemConstructorOptions | Electron.MenuItem> = [
     // { role: 'appMenu' }
-    ...(PLATFORM.IS_MAC ? macMenu : []),
+    ...(PLATFORM.IS_MAC ? buildMacMenu(app.name) : []),
     // { role: 'fileMenu' }
   ];
 
   const menu = Menu.buildFromTemplate(menuTemplate);
   Menu.setApplicationMenu(menu);
 };
+
+// On macOS the first item is always used as the app-name menu, and the standard roles keep shortcuts working.
+const buildMacMenu = (
+  appName: string,
+  appMenuItems: Electron.MenuItemConstructorOptions[] = []
+): Electron.MenuItemConstructorOptions[] => [
+  {
+    label: appName,
+    submenu: [
+      { role: 'hide' },
+      { role: 'hideOthers' },
+      { role: 'unhide' },
+      { type: 'separator' },
+      { role: 'quit' },
+    ],
+  },
+  {
+    label: 'Edit',
+    submenu: [
+      { role: 'undo' },
+      { role: 'redo' },
+      { type: 'separator' },
+      { role: 'cut' },
+      { role: 'copy' },
+      { role: 'paste' },
+      { role: 'selectAll' },
+    ],
+  },
+  ...appMenuItems,
+  { role: 'windowMenu' },
+];
 
 export const initMenuForMainWindow = (
   app: App,
@@ -172,6 +184,11 @@ export const addMenuItem = (menuItem: Electron.MenuItemConstructorOptions) => {
 };
 
 export const addMenuItems = (menuItems: Electron.MenuItemConstructorOptions[], window?: BrowserWindow) => {
+  // BrowserWindow.setMenu is a no-op on macOS, so rebuild the application menu with the window's items instead
+  if (window && PLATFORM.IS_MAC) {
+    Menu.setApplicationMenu(Menu.buildFromTemplate(buildMacMenu(electronApp.name, menuItems)));
+    return;
+  }
   const buildFromTemplate = Menu.buildFromTemplate(menuItems);
   if (window) {
     window.setMenu(buildFromTemplate);
