@@ -42,6 +42,7 @@ export abstract class BasePuppeteerInstanceController extends BaseBrowserInstanc
       try {
         await this.executeInstructions(this.instance.initInstructions);
       } catch (e) {
+        console.error(e);
         this.logger.error('Error executing init instructions', {
           error: e,
           instructions: this.instance.initInstructions,
